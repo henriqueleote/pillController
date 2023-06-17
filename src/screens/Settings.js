@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, FlatList  } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Button, Image, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import uuid from 'react-native-uuid';
+import { SwipeListView } from 'react-native-swipe-list-view';
+import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
+
 
 const Settings = () => {
-  
-  //AsyncStorage.clear();
+
   const [users, setUsers] = useState([]);
   const [userName, setUserName] = useState('');
   const [isComponentMounting, setComponentMounting] = useState(true);
@@ -15,7 +17,7 @@ const Settings = () => {
       const storedUsers = await AsyncStorage.getItem('@storage_Key');
       setUsers(JSON.parse(storedUsers));
       console.log(jsonValue);
-    } catch(e) {
+    } catch (e) {
       console.log("error loading -> " + e);
     }
   };
@@ -28,7 +30,30 @@ const Settings = () => {
       console.log("error saving -> " + e);
     }
   };
-  
+
+  const removeUser = (userId) => {
+    Alert.alert(
+      'Delete User',
+      'Are you sure you want to delete this user?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => setUsers(prevUsers => prevUsers.filter(user => user.id !== userId)),
+        },
+      ],
+      { cancelable: false }
+    );
+    //
+  };
+
+  const editUser = (userId) => {
+    // Implement edit logic here
+  };
 
   const addUser = () => {
     if (userName.trim() === '') {
@@ -49,6 +74,28 @@ const Settings = () => {
     setUserName('');
   };
 
+  const renderItem = ({ item }) => (
+    <View style={styles.itemContainer} key={item.id}>
+      <Text>{item.username}</Text>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => handleEdit(item.id)}
+        >
+        <Image source={require('../../assets/icons/edit.png')} style={{ width: 20, height: 20 }} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => removeUser(item.id)}
+        >
+        <Image source={require('../../assets/icons/delete.png')} style={{ width: 20, height: 20 }} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+  
+
   useEffect(() => {
     if (isComponentMounting) {
       setComponentMounting(false);
@@ -56,7 +103,7 @@ const Settings = () => {
     }
     storeData();
   }, [users]);
-  
+
   useEffect(() => {
     retrieveData();
   }, []); //call when mounted
@@ -66,32 +113,56 @@ const Settings = () => {
       flex: 1,
       padding: 16,
     },
-    inputContainer: {
+    user: {
+      marginBottom: 4,
+    },
+    list: {
+      marginTop: 10,
+    },
+    itemContainer: {
       flexDirection: 'row',
-      marginBottom: 8,
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: '#ccc',
+    },
+    buttonContainer: {
+      flexDirection: 'row',
+    },
+    editButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+    },
+    deleteButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
     },
     input: {
-      flex: 1,
-      marginRight: 8,
+      marginTop:50,
       paddingVertical: 8,
       paddingHorizontal: 12,
       borderWidth: 1,
       borderColor: '#ccc',
       borderRadius: 4,
     },
-    user: {
-      marginBottom: 4,
-    },
-    list: {
+    inputButtonContainer: {
       marginTop: 10,
-    }
+      marginHorizontal: 12,
+    },    
+    
+    
   });
 
   return (
-    <View style={styles.container}>
-
-
-      <View style={styles.inputContainer}>
+    <GestureHandlerRootView style={styles.container}>
+      {
+        users.map((user) => (
+          renderItem({ item: user }) // Pass the user as 'item' prop to renderItem
+        ))
+      }
+      <View>
         <TextInput
           style={styles.input}
           value={userName}
@@ -99,20 +170,11 @@ const Settings = () => {
           placeholder="Pacient name"
           keyboardType="numeric"
         />
+      </View>
+      <View style={styles.inputButtonContainer}>
         <Button title="Add User" onPress={addUser} />
       </View>
-
-      <FlatList
-  data={users}
-  keyExtractor={item => item.id}
-  renderItem={({ item }) => (
-    // Render individual items
-    <Text>{item.username}</Text>
-  )}
-  extraData={users} // Pass the users array as extraData to force re-render
-/>
-
-    </View>
+    </GestureHandlerRootView>
   );
 };
 
