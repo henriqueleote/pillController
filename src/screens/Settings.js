@@ -1,35 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Button, Image, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import uuid from 'react-native-uuid';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
-
+import { retrieveData, storeData } from '../storageUtils';
+import uuid from 'react-native-uuid';
 
 const Settings = () => {
-
   const [users, setUsers] = useState([]);
   const [userName, setUserName] = useState('');
   const [isComponentMounting, setComponentMounting] = useState(true);
-
-  const retrieveData = async () => {
-    try {
-      const storedUsers = await AsyncStorage.getItem('@storage_Key');
-      setUsers(JSON.parse(storedUsers));
-      console.log(jsonValue);
-    } catch (e) {
-      console.log("error loading -> " + e);
-    }
-  };
-
-  const storeData = async () => {
-    try {
-      const usersToStore = JSON.stringify(users);
-      await AsyncStorage.setItem('@storage_Key', usersToStore).then(console.log("saved with success"));
-    } catch (e) {
-      console.log("error saving -> " + e);
-    }
-  };
 
   const removeUser = (userId) => {
     Alert.alert(
@@ -48,11 +27,23 @@ const Settings = () => {
       ],
       { cancelable: false }
     );
-    //
   };
 
   const editUser = (userId) => {
-    // Implement edit logic here
+    const user = users.find(user => user.id === userId);
+    /*if (user) {
+      Alert.prompt(
+        'Edit User',
+        'Enter the new username:',
+        (newUsername) => {
+          if (newUsername !== null && newUsername.trim() !== '') {
+            editUser(userId, newUsername);
+          }
+        },
+        'plain-text',
+        user.username
+      );
+    }*/
   };
 
   const addUser = () => {
@@ -69,7 +60,7 @@ const Settings = () => {
 
     setUsers(prevUsers => [...(prevUsers || []), newUser]);
 
-    storeData();
+    storeData('@storage_Key', users);
 
     setUserName('');
   };
@@ -80,33 +71,38 @@ const Settings = () => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.editButton}
-          onPress={() => handleEdit(item.id)}
+          onPress={() => editUser(item.id)}
         >
-        <Image source={require('../../assets/icons/edit.png')} style={{ width: 20, height: 20 }} />
+          <Image source={require('../../assets/icons/edit.png')} style={{ width: 20, height: 20 }} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => removeUser(item.id)}
         >
-        <Image source={require('../../assets/icons/delete.png')} style={{ width: 20, height: 20 }} />
+          <Image source={require('../../assets/icons/delete.png')} style={{ width: 20, height: 20 }} />
         </TouchableOpacity>
       </View>
     </View>
   );
-  
 
   useEffect(() => {
     if (isComponentMounting) {
       setComponentMounting(false);
       return;
     }
-    storeData();
+    storeData('@storage_Key', users);
   }, [users]);
 
   useEffect(() => {
-    retrieveData();
-  }, []); //call when mounted
+    const loadData = async () => {
+      const storedUsers = await retrieveData('@storage_Key');
+      if (storedUsers) {
+        setUsers(storedUsers);
+      }
+    };
+    loadData();
+  }, []);
 
   const styles = StyleSheet.create({
     container: {
@@ -140,7 +136,7 @@ const Settings = () => {
       paddingVertical: 8,
     },
     input: {
-      marginTop:50,
+      marginTop: 50,
       paddingVertical: 8,
       paddingHorizontal: 12,
       borderWidth: 1,
@@ -150,18 +146,14 @@ const Settings = () => {
     inputButtonContainer: {
       marginTop: 10,
       marginHorizontal: 12,
-    },    
-    
-    
+    },
   });
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      {
-        users.map((user) => (
-          renderItem({ item: user }) // Pass the user as 'item' prop to renderItem
-        ))
-      }
+      {users.map((user) => (
+        renderItem({ item: user })
+      ))}
       <View>
         <TextInput
           style={styles.input}
