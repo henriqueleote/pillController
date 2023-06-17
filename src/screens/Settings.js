@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, Image, Alert } from 'react-native';
-import { SwipeListView } from 'react-native-swipe-list-view';
+import { View, Text, StyleSheet, TextInput, Button, Image, Alert, ScrollView, Dimensions } from 'react-native';
 import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
 import { retrieveData, storeData } from '../storageUtils';
 import uuid from 'react-native-uuid';
@@ -106,8 +105,15 @@ const Settings = () => {
 
   const styles = StyleSheet.create({
     container: {
-      flex: 1,
       padding: 16,
+    },
+    pickerTitle: {
+      fontSize: 18,
+      textAlign: 'center'
+    },
+    itemsContainer:{
+      marginTop: 20,
+      height: Dimensions.get('window').height - 320, // Adjust the value according to your needs
     },
     user: {
       marginBottom: 4,
@@ -151,9 +157,12 @@ const Settings = () => {
 
   return (
     <GestureHandlerRootView style={styles.container}>
+      <Text style={styles.pickerTitle}>Escolha o utilizador</Text>
+      <ScrollView style={styles.itemsContainer}>
       {users.map((user) => (
         renderItem({ item: user })
       ))}
+            </ScrollView>
       <View>
         <TextInput
           style={styles.input}
