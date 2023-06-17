@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
+import ComboBox from '../components/ComboBox';
+
 const Main = () => {
   return (
-    <View style={styles.container}>
-      <Text>Main Screen</Text>
+    <View >
+      <ComboBox />
     </View>
   );
 };
