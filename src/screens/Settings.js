@@ -1,19 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Button, FlatList  } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import uuid from 'react-native-uuid';
 
 const Settings = () => {
-
+  
+  //AsyncStorage.clear();
   const [users, setUsers] = useState([]);
-  const [newUser, setNewUser] = useState('');
+  const [userName, setUserName] = useState('');
+  const [isComponentMounting, setComponentMounting] = useState(true);
+
+  const retrieveData = async () => {
+    try {
+      const storedUsers = await AsyncStorage.getItem('@storage_Key');
+      setUsers(JSON.parse(storedUsers));
+      console.log(jsonValue);
+    } catch(e) {
+      console.log("error loading -> " + e);
+    }
+  };
+
+  const storeData = async () => {
+    try {
+      const usersToStore = JSON.stringify(users);
+      await AsyncStorage.setItem('@storage_Key', usersToStore).then(console.log("saved with success"));
+    } catch (e) {
+      console.log("error saving -> " + e);
+    }
+  };
+  
 
   const addUser = () => {
-    if (newUser.trim() === '') {
+    if (userName.trim() === '') {
       return;
     }
 
-    setUsers((prevUsers) => [...prevUsers, newUser]);
-    setNewUser('');
+    const userID = uuid.v4();
+
+    const newUser = {
+      id: userID,
+      username: userName,
+    };
+
+    setUsers(prevUsers => [...(prevUsers || []), newUser]);
+
+    storeData();
+
+    setUserName('');
   };
+
+  useEffect(() => {
+    if (isComponentMounting) {
+      setComponentMounting(false);
+      return;
+    }
+    storeData();
+  }, [users]);
+  
+  useEffect(() => {
+    retrieveData();
+  }, []); //call when mounted
 
   const styles = StyleSheet.create({
     container: {
@@ -36,6 +82,9 @@ const Settings = () => {
     user: {
       marginBottom: 4,
     },
+    list: {
+      marginTop: 10,
+    }
   });
 
   return (
@@ -45,8 +94,8 @@ const Settings = () => {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          value={newUser}
-          onChangeText={setNewUser}
+          value={userName}
+          onChangeText={setUserName}
           placeholder="Pacient name"
           keyboardType="numeric"
         />
@@ -54,10 +103,14 @@ const Settings = () => {
       </View>
 
       <FlatList
-        data={users}
-        renderItem={({ item }) => <Text style={styles.user}>{item}</Text>}
-        keyExtractor={(item, index) => index.toString()}
-      />
+  data={users}
+  keyExtractor={item => item.id}
+  renderItem={({ item }) => (
+    // Render individual items
+    <Text>{item.username}</Text>
+  )}
+  extraData={users} // Pass the users array as extraData to force re-render
+/>
 
     </View>
   );
