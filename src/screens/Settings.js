@@ -59,8 +59,6 @@ const Settings = () => {
 
     setUsers(prevUsers => [...(prevUsers || []), newUser]);
 
-    storeData('@storage_Key', users);
-
     setUserName('');
   };
 
@@ -90,18 +88,20 @@ const Settings = () => {
       setComponentMounting(false);
       return;
     }
-    storeData('@storage_Key', users);
+    storeData('@storage_users', users);
   }, [users]);
 
   useEffect(() => {
-    const loadData = async () => {
-      const storedUsers = await retrieveData('@storage_Key');
+    const loadUsers = async () => {
+      const storedUsers = await retrieveData('@storage_users');
       if (storedUsers) {
         setUsers(storedUsers);
       }
     };
-    loadData();
+    loadUsers();
   }, []);
+
+  const windowHeight = Dimensions.get('window').height;
 
   const styles = StyleSheet.create({
     container: {
@@ -111,9 +111,8 @@ const Settings = () => {
       fontSize: 18,
       textAlign: 'center'
     },
-    itemsContainer:{
-      marginTop: 20,
-      height: Dimensions.get('window').height - 320, // Adjust the value according to your needs
+    itemsContainer: {
+      height: windowHeight - 320, // Adjust the value according to your needs
     },
     user: {
       marginBottom: 4,
@@ -159,10 +158,10 @@ const Settings = () => {
     <GestureHandlerRootView style={styles.container}>
       <Text style={styles.pickerTitle}>Escolha o utilizador</Text>
       <ScrollView style={styles.itemsContainer}>
-      {users.map((user) => (
-        renderItem({ item: user })
-      ))}
-            </ScrollView>
+        {users.map((user) => (
+          renderItem({ item: user })
+        ))}
+      </ScrollView>
       <View>
         <TextInput
           style={styles.input}

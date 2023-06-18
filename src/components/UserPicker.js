@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
-import { Picker } from "@react-native-picker/picker"
+import { View, Text, StyleSheet } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { retrieveData } from '../storageUtils';
 
-const UserPicker = () => {
-
+const UserPicker = ({ onUserSelect }) => {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
+
+  //When deleting, he doesnt change the selected, only the picker
 
   useEffect(() => {
     const fetchData = async () => {
@@ -14,17 +15,22 @@ const UserPicker = () => {
       setUsers(retrievedData);
     };
     fetchData();
-  }, []);
+  }, [users]); // Add 'users' as a dependency
 
   const handlePickerChange = (value) => {
     setSelectedUserId(value);
-    console.log(value)
+    const selectedUser = users.find((user) => user.id === value);
+    onUserSelect(selectedUser);
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.pickerTitle}>Escolha o utilizador</Text>
-      <Picker style={styles.pickerContainer} selectedValue={selectedUserId} onValueChange={handlePickerChange}>
+      <Picker
+        style={styles.pickerContainer}
+        selectedValue={selectedUserId}
+        onValueChange={handlePickerChange}
+      >
         {users.map((user) => (
           <Picker.Item key={user.id} label={user.username} value={user.id} />
         ))}
@@ -41,8 +47,8 @@ const styles = StyleSheet.create({
     width: 300,
   },
   pickerTitle: {
-    fontSize: 18
+    fontSize: 18,
   },
 });
-  
+
 export default UserPicker;

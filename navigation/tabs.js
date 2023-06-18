@@ -3,7 +3,7 @@ import { StyleSheet, Image } from 'react-native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Import the desired icon library
 
-import Main from '../src/screens/Main';
+import Home from '../src/screens/Home';
 import Settings from '../src/screens/Settings';
 
 const Tab = createBottomTabNavigator();
@@ -25,7 +25,7 @@ const Tabs = () => {
                 }
             }}
         >
-            <Tab.Screen name='Main' component={Main} options={{ headerShown: false, tabBarIcon: ({ focused }) => (<Image source={require('../assets/icons/home.png')} style={{ width: 25, height: 25, tintColor: focused ? '#2a324b' : '#2a324b' }} />) }} />
+            <Tab.Screen name='Home' component={Home} options={{ headerShown: false, tabBarIcon: ({ focused }) => (<Image source={require('../assets/icons/home.png')} style={{ width: 25, height: 25, tintColor: focused ? '#2a324b' : '#2a324b' }} />) }} />
             <Tab.Screen name='Settings' component={Settings} options={{ headerShown: false, tabBarIcon: ({ focused }) => (<Image source={require('../assets/icons/settings.png')} style={{ width: 25, height: 25, tintColor: focused ? '#2a324b' : '#2a324b' }} />) }} />
         </Tab.Navigator>
     )
