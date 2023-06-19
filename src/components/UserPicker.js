@@ -7,15 +7,16 @@ const UserPicker = ({ onUserSelect }) => {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
 
-  //When deleting, he doesnt change the selected, only the picker
-
   useEffect(() => {
     const fetchData = async () => {
-      const retrievedData = await retrieveData('@storage_Key');
+      const retrievedData = await retrieveData('@storage_users');
       setUsers(retrievedData);
+      if (retrievedData.length > 0 && selectedUserId === null) {
+        setSelectedUserId(retrievedData[0].id);
+      }
     };
     fetchData();
-  }, [users]); // Add 'users' as a dependency
+  }, [users]);
 
   const handlePickerChange = (value) => {
     setSelectedUserId(value);
