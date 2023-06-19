@@ -2,46 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions, ScrollView } from 'react-native';
 import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
+import { Picker } from '@react-native-picker/picker';
 import { retrieveData } from '../storageUtils';
 
-import UserPicker from '../components/UserPicker';
-
 const Home = () => {
-
   const windowHeight = Dimensions.get('screen').height;
 
-
+  const [users, setUsers] = useState([]);
+  const [text, setText] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
-  const [data, setData] = useState([]);
 
   const navigation = useNavigation();
 
   useEffect(() => {
-    const loadData = async () => {
-      const storedData = await retrieveData('@storage_data');
-      if (storedData) {
-        console.log(storedData);
-        setData(storedData);
+    const fetchData = async () => {
+      const retrievedData = await retrieveData('@storage_users');
+      setUsers(retrievedData);
+      if (retrievedData.length > 0) {
+        setSelectedUser(retrievedData[0].id);
+      } else if (!retrievedData.some((user) => user.id === selectedUser)) {
+        setSelectedUser(null);
       }
     };
-    loadData();
-  }, []);
+    fetchData();
+  }, [users]);
 
-  const handleUserSelect = (user) => {
-    setSelectedUser(user);
+
+  const handleUserSelect = (value) => {
+    setSelectedUser(value);
   };
-
-  const handleAddPillData = () => {
-    if (selectedUser) {
-      navigation.navigate('AddPillData', { user: selectedUser });
-    }
-  };
-
-  const renderItem = ({ item }) => (
-    <View style={styles.itemContainer} key={item.pillID}>
-      <Text>{item.pillName}</Text>
-    </View>
-  );
 
   const styles = StyleSheet.create({
     container: {
@@ -50,7 +39,7 @@ const Home = () => {
     },
     pickerContainer: {
       marginTop: 20,
-      flex: 1,
+      width: 300,
     },
     listContainer: {
       height: windowHeight - 400,
@@ -79,33 +68,25 @@ const Home = () => {
     },
     buttonText: {
       fontSize: 30,
-      color: 'black'
-    }
+      color: 'black',
+    },
   });
 
   return (
     <View style={styles.container}>
       <View style={styles.pickerContainer}>
-        <UserPicker onUserSelect={handleUserSelect} />
-        <Text>Selected User: {selectedUser ? selectedUser.username : 'None'}</Text>
+        <Picker
+          selectedValue={selectedUser}
+          onValueChange={handleUserSelect}
+          style={styles.pickerContainer}
+        >
+          {users.map((user) => (
+            <Picker.Item key={user.id} label={user.username} value={user.id} />
+          ))}
+        </Picker>
+        
       </View>
-      <ScrollView style={styles.itemsContainer}>
-        {data.map((pill) => {
-          if (selectedUser && selectedUser.id === pill.userID) {
-            return renderItem({ item: pill });
-          }
-          return null; // Render nothing if the condition is not met
-        })}
 
-      </ScrollView>
-      <View style={styles.buttonContainer}>
-        <GestureHandlerRootView>
-          <TouchableOpacity style={styles.button} activeOpacity={0.8}
-            onPress={handleAddPillData}>
-            <Text style={styles.buttonText}>+</Text>
-          </TouchableOpacity>
-        </GestureHandlerRootView>
-      </View>
     </View>
   );
 };
