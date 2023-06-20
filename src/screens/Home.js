@@ -1,26 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, ScrollView } from 'react-native';
-import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
+import { View, Text, StyleSheet, Dimensions, ScrollView, Alert } from 'react-native';
+import { GestureHandlerRootView, TouchableOpacity, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
-import { retrieveData } from '../storageUtils';
+import { retrieveData, storeData } from '../storageUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Home = () => {
+const Home = ({ route }) => {
   const windowHeight = Dimensions.get('screen').height;
   const [users, setUsers] = useState([]);
   const [data, setData] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
-
-
+  const [deleted, setDeleted] = useState(false);
+  
   const navigation = useNavigation();
+
+  const fetchData = async () => {
+    const storedData = await retrieveData('@storage_data');
+    console.log("got data");
+    if (storedData) {
+      setData(storedData);
+    }
+  };
 
   useEffect(() => {
     const fetchUsers = async () => {
       const retrievedData = await retrieveData('@storage_users');
       if (retrievedData.length > 0) {
         setUsers(retrievedData);
-      }else{
+      } else {
         console.log("no users");
       }
     };
@@ -28,30 +36,22 @@ const Home = () => {
   }, [users]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const storedData = await retrieveData('@storage_data');
-      if (storedData) {
-        setData(storedData);
-        console.log(storedData);
-      }
-    };
+    if(deleted){
+      setDeleted(false);
+      storeData('@storage_data', data);
+    }
+  }, [data]);
+
+  useEffect(() => {
     fetchData();
   }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const storedData = await retrieveData('@storage_data');
-      if (storedData) {
-        setData(storedData);
-        console.log(storedData);
-      }
-    };
-    fetchData();
     const selectedUser = users.find((user) => user.id === selectedUserId);
     const username = selectedUser ? selectedUser.username : 'None';
-    console.log(username);
   }, [selectedUserId]);
 
+  //use this method to update the list setSelectedUserID(selectedUserId)
   const handleUserSelect = (value) => {
     setSelectedUserId(value);
   };
@@ -63,9 +63,37 @@ const Home = () => {
     }
   };
 
-  const renderItem = ({ item }) => {
+  
+  const removePill = (pillID) => {
+    Alert.alert(
+      'Delete pill',
+      'Are you sure you want to delete this pill?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            setDeleted(true);
+            //TODO CHECK WHY TF HE'S DELETTING ALL OF THEM
+            setData(prevData => prevData.filter(pill => pill.pillID !== pillID));
+          }
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
+  const renderItem = ({ item, onItemLongPress }) => {
+    const handleLongPress = () => {
+      removePill(item.pillID);
+    };
     return (
-      <View style={styles.cardContainer} key={item.pillID}>
+      <TouchableWithoutFeedback onLongPress={handleLongPress} key={item.pillID}>
+      <View style={styles.cardContainer} >
         <Text style={styles.cardTitle}>{item.pillName}</Text>
         <View style={styles.cardInfoContainer}>
           <Text style={styles.cardInfo}>Per Box: {item.perBox}</Text>
@@ -73,13 +101,14 @@ const Home = () => {
           <Text style={styles.cardInfo}>Starting Date: {item.startingDate}</Text>
         </View>
       </View>
+      </TouchableWithoutFeedback>
     );
   };
-  
-  
+
+
 
   const styles = StyleSheet.create({
-    itemsContainer:{
+    itemsContainer: {
       paddingLeft: 15,
       paddingRight: 15,
     },
@@ -166,16 +195,20 @@ const Home = () => {
           if (selectedUserId && selectedUserId === pill.userID) {
             return renderItem({ item: pill });
           }
-          return null; // Render nothing if the condition is not met
+          return null; // Skip rendering for non-matching pills
         })}
+        {data.length === 0 || data.every((pill) => pill.userID !== selectedUserId) && (
+          <Text>No pills</Text>
+        )}
       </ScrollView>
+
       <View style={styles.buttonContainer}>
         <GestureHandlerRootView>
           <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={handleAddPillData}>
             <Text style={styles.buttonText}>+</Text>
           </TouchableOpacity>
         </GestureHandlerRootView>
-      </View>        
+      </View>
     </View>
   );
 };
