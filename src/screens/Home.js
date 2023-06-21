@@ -4,7 +4,6 @@ import { GestureHandlerRootView, TouchableOpacity, TouchableWithoutFeedback } fr
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import { retrieveData, storeData } from '../storageUtils';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Home = () => {
   const windowHeight = Dimensions.get('screen').height;
@@ -16,11 +15,16 @@ const Home = () => {
 
   const navigation = useNavigation();
 
+  const checkNotifications = () => {
+    console.log("checking...");
+  }
+
   useEffect(() => {
     if (isFocused) {
       console.log("Home page")
       fetchData();
       fetchUsers();
+      checkNotifications();
     }
   }, [isFocused]);
 
@@ -105,6 +109,7 @@ const Home = () => {
             <Text style={styles.cardInfo}>Per Box: {item.perBox}</Text>
             <Text style={styles.cardInfo}>Per Day: {item.perDay}</Text>
             <Text style={styles.cardInfo}>Starting Date: {item.startingDate}</Text>
+            <Text style={styles.cardInfo}>Last pill Date: {item.outOfStockDate}</Text>
           </View>
         </View>
       </TouchableWithoutFeedback>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { storeData, retrieveData } from '../storageUtils';
+import { storeData } from '../storageUtils';
 import uuid from 'react-native-uuid';
+import DatePicker from 'react-native-date-picker'
 
 
 const AddPillData = ({ route }) => {
@@ -15,27 +16,46 @@ const AddPillData = ({ route }) => {
   const [startingDate, setStartingDate] = useState('');
   const [hasNewData, setHasNewData] = useState(false);
 
+  const [date, setDate] = useState(new Date())
+  const [modalOpen, setModalOpen] = useState(false)
+
   const navigation = useNavigation();
 
   const handleGoBack = () => {
     navigation.navigate('Home')
   };
 
+  //on date change, since there's not handleDateChange
+  useEffect(() => {
+    console.log(date);
+    setStartingDate(date);
+  },[date])
+
   const addPills = () => {
-    if (pillName.trim() === '' || perBox.trim() === '' || perDay.trim() === '' || startingDate.trim() === '') {
+    if (pillName.trim() === '' || perBox.trim() === '' || perDay.trim() === '') {
       alert('Please fill in all fields');
       return;
     }
-  
+
+    console.log(startingDate);
+
+
+    const pillsPerDay = parseInt(perDay, 10);
+    const pillsInBox = parseInt(perBox, 10);
+
+    const daysUntilOutOfStock = Math.ceil(pillsInBox / pillsPerDay);
+    const outOfStockDate = new Date(startingDate.getTime() + (daysUntilOutOfStock - 1) * 24 * 60 * 60 * 1000);
+
     const pillID = uuid.v4();
-  
+
     const newData = {
       userID: user.id,
       pillID: pillID,
       pillName: pillName,
       perBox: perBox,
       perDay: perDay,
-      startingDate: startingDate,
+      startingDate: startingDate.toISOString().split('T')[0],
+      outOfStockDate: outOfStockDate.toISOString().split('T')[0], // Convert date to ISO format and extract the date part
     };
   
     setData(prevData => [...prevData, newData]);
@@ -96,13 +116,20 @@ const AddPillData = ({ route }) => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Starting Date:</Text>
-        <TextInput
-          style={styles.input}
-          value={startingDate}
-          onChangeText={setStartingDate}
-          placeholder="Enter starting date"
-          keyboardType="numeric"
-        />
+        <Button title="Open" onPress={() => setModalOpen(true)} />
+      <DatePicker
+        modal
+        mode="date"
+        open={modalOpen}
+        date={date}
+        onConfirm={(date) => {
+          setModalOpen(false)
+          setDate(date)
+        }}
+        onCancel={() => {
+          setModalOpen(false)
+        }}
+      />
       </View>
 
       <Button title='Create pill' onPress={addPills}/>
