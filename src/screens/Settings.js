@@ -168,7 +168,7 @@ const Settings = () => {
           value={userName}
           onChangeText={setUserName}
           placeholder="Pacient name"
-          keyboardType="numeric"
+          keyboardType="default"
         />
       </View>
       <View style={styles.inputButtonContainer}>
