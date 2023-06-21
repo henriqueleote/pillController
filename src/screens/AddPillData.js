@@ -6,65 +6,56 @@ import uuid from 'react-native-uuid';
 
 
 const AddPillData = ({ route }) => {
-  const { user } = route.params;
+  const { user, data: initialData } = route.params;
 
-  const [data, setData] = useState([]);
-  const [pillName, setPillName] = useState('fds');
-  const [perBox, setPerBox] = useState('fds');
-  const [perDay, setPerDay] = useState('fds');
-  const [startingDate, setStartingDate] = useState('fds');
-  const [isComponentMounting, setComponentMounting] = useState(true);
+  const [data, setData] = useState(initialData || []);
+  const [pillName, setPillName] = useState('');
+  const [perBox, setPerBox] = useState('');
+  const [perDay, setPerDay] = useState('');
+  const [startingDate, setStartingDate] = useState('');
+  const [hasNewData, setHasNewData] = useState(false);
 
   const navigation = useNavigation();
 
   const handleGoBack = () => {
-    // Handle saving the pill data or any other logic before navigating back
-    navigation.goBack();
+    navigation.navigate('Home')
   };
 
   const addPills = () => {
     if (pillName.trim() === '' || perBox.trim() === '' || perDay.trim() === '' || startingDate.trim() === '') {
-        alert('Please fill in all fields');
-        return;
-      }
-
+      alert('Please fill in all fields');
+      return;
+    }
+  
     const pillID = uuid.v4();
-
+  
     const newData = {
       userID: user.id,
       pillID: pillID,
       pillName: pillName,
       perBox: perBox,
-      perDay, perDay,
-      startingDate, startingDate,
+      perDay: perDay,
+      startingDate: startingDate,
     };
-
-    console.log(newData);
-    setData(prevData => [...(prevData || []), newData]);
-
+  
+    setData(prevData => [...prevData, newData]);
+  
+    setHasNewData(true);
+  
     setPillName('');
     setPerBox('');
     setPerDay('');
     setStartingDate('');
   };
+  
 
+  
   useEffect(() => {
-    if (isComponentMounting) {
-      setComponentMounting(false);
-      return;
+    if(hasNewData){
+      storeData('@storage_data', data);
+      navigation.navigate('Home')
     }
-    storeData('@storage_data', data);
   }, [data]);
-
-  useEffect(() => {
-    const loadUsers = async () => {
-      const storedData = await retrieveData('@storage_data');
-      if (storedData) {
-        setData(storedData);
-      }
-    };
-    loadUsers();
-  }, []);
 
   return (
     <View style={styles.container}>
